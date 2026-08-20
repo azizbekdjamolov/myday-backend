@@ -11,7 +11,7 @@ from .managers import UserManager
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, db_index=True)
     name = models.CharField(max_length=150, blank=True, default="")
-    timezone = TimeZoneField(default="UTC", help_text="Used for all schedule and reminder calculations.")
+    timezone = TimeZoneField(default="Asia/Tashkent", help_text="Used for all schedule and reminder calculations.")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=dj_timezone.now)
