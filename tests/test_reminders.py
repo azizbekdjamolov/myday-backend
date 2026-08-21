@@ -11,7 +11,7 @@ from apps.reminders.models import Reminder
 
 from tests.conftest import PASSWORD
 
-REMINDERS = "/api/v1/reminders/reminders/"
+REMINDERS = "/api/v1/reminders/"
 
 
 def _login(api, user):

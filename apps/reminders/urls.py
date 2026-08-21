@@ -4,6 +4,6 @@ from rest_framework.routers import DefaultRouter
 from .views import ReminderViewSet
 
 router = DefaultRouter()
-router.register("reminders", ReminderViewSet, basename="reminder")
+router.register("", ReminderViewSet, basename="reminder")
 
 urlpatterns = [path("", include(router.urls))]

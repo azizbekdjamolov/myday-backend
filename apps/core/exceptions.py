@@ -130,12 +130,20 @@ def api_exception_handler(exc, context):
         return response
 
     detail = response.data
-    message = str(_format_detail(detail.get("detail", "Request could not be processed.")))
     code = _code_for_drf(exc)
+    message = str(_format_detail(detail.get("detail", ""))) if isinstance(detail, dict) else str(detail)
 
-    body = {"error": {"code": code, "message": message}}
+    # For field-level validation errors, extract a human-readable message
+    # from the first error so the client shows something actionable.
+    if not message and isinstance(detail, dict) and "detail" not in detail:
+        for errors in detail.values():
+            if errors:
+                message = str(errors[0] if isinstance(errors, (list, tuple)) else errors)
+                break
 
-    # Attach field-level details for 422-style validation errors only, where
+    body = {"error": {"code": code, "message": message or "Request could not be processed."}}
+
+    # Attach field-level details for validation errors where
     # the payload shape is well understood.
     if isinstance(detail, dict) and "detail" not in detail:
         body["error"]["details"] = _format_detail(detail)
