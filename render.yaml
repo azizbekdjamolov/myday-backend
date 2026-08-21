@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements/prod.txt
-    startCommand: python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    startCommand: python manage.py migrate --noinput && python manage.py seed_admin && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
     healthCheckPath: /healthz/
     envVars:
       - key: DJANGO_SETTINGS_MODULE
