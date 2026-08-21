@@ -27,6 +27,44 @@ def test_register_creates_user(api, db):
     assert user.permission_codes() == set()
 
 
+def test_register_automatically_logs_in(api, db):
+    """Registration must authenticate the user immediately — no login page."""
+    response = api.post(
+        REGISTER,
+        {"email": "auto@example.com", "name": "Auto", "password": PASSWORD, "password_confirm": PASSWORD},
+        format="json",
+    )
+    assert response.status_code == 201
+    assert api.cookies["myday_access"]
+    assert api.cookies["myday_refresh"]
+    assert response.data["email"] == "auto@example.com"
+    # The session works: /me returns the freshly registered user.
+    me = api.get(ME)
+    assert me.status_code == 200
+    assert me.data["email"] == "auto@example.com"
+
+
+def test_register_duplicate_email_rejected_and_not_logged_in(api, db, normal_user):
+    response = api.post(
+        REGISTER,
+        {"email": normal_user.email, "password": PASSWORD, "password_confirm": PASSWORD},
+        format="json",
+    )
+    assert response.status_code == 400
+    # A failed registration must not create a session.
+    assert "myday_access" not in api.cookies or api.get(ME).status_code == 401
+
+
+def test_register_invalid_data_not_logged_in(api, db):
+    response = api.post(
+        REGISTER,
+        {"email": "not-an-email", "password": PASSWORD, "password_confirm": PASSWORD},
+        format="json",
+    )
+    assert response.status_code == 400
+    assert api.get(ME).status_code == 401
+
+
 def test_register_password_mismatch(api, db):
     response = api.post(
         REGISTER,

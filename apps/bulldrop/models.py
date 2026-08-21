@@ -15,9 +15,22 @@ from django.utils import timezone
 
 
 class BullDropAccount(models.Model):
+    """Which browser the user runs this account in is chosen manually —
+    the app never fingerprints or detects the user's real browser."""
+
+    class Browser(models.TextChoices):
+        CHROME = "chrome", "Google Chrome"
+        OPERA = "opera", "Opera"
+        DUCKDUCKGO = "duckduckgo", "DuckDuckGo"
+        EDGE = "edge", "Microsoft Edge"
+        FIREFOX = "firefox", "Firefox"
+        BRAVE = "brave", "Brave"
+        OTHER = "other", "Other"
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bulldrop_accounts")
     name = models.CharField(max_length=120)
     username = models.CharField(max_length=120, blank=True, default="")
+    browser = models.CharField(max_length=20, choices=Browser.choices, default=Browser.CHROME)
     notes = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -58,8 +71,6 @@ class BullDropAccount(models.Model):
 class BullDropClaim(models.Model):
     account = models.ForeignKey(BullDropAccount, on_delete=models.CASCADE, related_name="claims")
     claimed_at = models.DateTimeField(default=timezone.now, db_index=True)
-    promo_code = models.CharField(max_length=64, blank=True, default="", db_index=True)
-    note = models.CharField(max_length=300, blank=True, default="")
 
     class Meta:
         ordering = ["-claimed_at"]

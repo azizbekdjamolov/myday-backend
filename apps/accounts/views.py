@@ -95,7 +95,12 @@ class RegisterView(APIView):
             resource_id=user.id,
             request=request,
         )
-        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        # Registration doubles as first login: the same JWT cookie pair used
+        # by LoginView is issued here so the SPA lands on the dashboard
+        # already authenticated. Nothing is set when validation fails.
+        response = Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        _set_auth_cookies(response, user)
+        return response
 
 
 class LoginView(APIView):
