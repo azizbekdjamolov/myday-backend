@@ -99,6 +99,63 @@ class VaultItemViewSet(viewsets.ModelViewSet):
         )
         instance.delete()
 
+    @action(detail=False, methods=["get"])
+    def security(self, request):
+        """Password health dashboard.
+
+        Passwords are decrypted only inside this request to compute strength
+        and reuse; the response contains counts and item references — never a
+        password value.
+        """
+        items = list(
+            VaultItem.objects.filter(user=request.user).exclude(encrypted_password="").prefetch_related("files")
+        )
+
+        from collections import Counter
+
+        entries: list[tuple[VaultItem, str]] = []
+        for item in items:
+            password = services.decrypt_field(item.encrypted_password)
+            if password:
+                entries.append((item, password))
+
+        # How many items share each password value (reuse detection).
+        usage = Counter(password for _, password in entries)
+
+        weak: list[dict] = []
+        reused: list[dict] = []
+        strong: list[dict] = []
+
+        def ref(item: VaultItem) -> dict:
+            return {"id": item.id, "title": item.title, "category": item.category}
+
+        for item, password in entries:
+            if usage[password] > 1:
+                # Every item sharing a password is affected by the reuse.
+                reused.append(ref(item))
+                continue
+            has_lower = any(c.islower() for c in password)
+            has_upper = any(c.isupper() for c in password)
+            has_digit = any(c.isdigit() for c in password)
+            has_symbol = any(not c.isalnum() for c in password)
+            variety = sum((has_lower, has_upper, has_digit, has_symbol))
+            if len(password) < 12 or variety <= 2:
+                weak.append(ref(item))
+            else:
+                strong.append(ref(item))
+
+        total = len(weak) + len(reused) + len(strong)
+        score = round(100 * len(strong) / total) if total else 100
+        return Response(
+            {
+                "total": total,
+                "score": score,
+                "weak": {"count": len(weak), "items": weak},
+                "reused": {"count": len(reused), "items": reused},
+                "strong": {"count": len(strong), "items": strong},
+            }
+        )
+
     @action(detail=True, methods=["post"], throttle_classes=[ScopedRateThrottle])
     def reveal(self, request, pk=None):
         item = self.get_object()

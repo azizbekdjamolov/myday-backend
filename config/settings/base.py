@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.permissions",
     "apps.vault",
+    "apps.images",
     "apps.bulldrop",
     "apps.internlik",
     "apps.schedule",
@@ -151,6 +152,7 @@ REST_FRAMEWORK = {
         "auth": "20/min",
         "bulldrop_claim": "10/m",
         "vault_reveal": "10/min",
+        "image_view": "30/min",
     },
 }
 
@@ -210,6 +212,9 @@ VAULT_MASTER_KEY = env_base64_key("VAULT_MASTER_KEY", required=REQUIRE_VAULT_MAS
 VAULT_FILE_MAX_SIZE = env_int("VAULT_FILE_MAX_SIZE", 5 * 1024 * 1024)
 VAULT_REVEAL_TTL_SECONDS = env_int("VAULT_REVEAL_TTL_SECONDS", 30)
 VAULT_AUTOLOCK_MINUTES = env_int("VAULT_AUTOLOCK_MINUTES", 5)
+
+# Private images module (separate from Vault)
+IMAGE_MAX_SIZE = env_int("IMAGE_MAX_SIZE", 10 * 1024 * 1024)
 
 # Private file storage root (outside web root / MEDIA_ROOT)
 PRIVATE_MEDIA_ROOT = env_str("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_storage"))
